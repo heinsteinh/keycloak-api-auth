@@ -1,26 +1,59 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth, requireRole } from "../auth/require-auth.js";
-import { id } from "zod/locales";
+import {
+    getCurrentWeather,
+    CityNotFoundError,
+    UpstreamError,
+} from "../weather/openMeteo.js";
+
+const DEFAULT_LOCATION = "New York";
 
 export async function weatherRoutes(app: FastifyInstance) {
-    app.get(
-        '/api/weather',
-        {
-            preHandler: [requireAuth, requireRole('weather:read')] 
-        },
-        async (request) => {
-          return {
-                location: 'New York',
-                temperature: '15°C',
-                condition: 'Cloudy',
+    async function respondWithWeather(
+        city: string,
+        request: import("fastify").FastifyRequest,
+        reply: import("fastify").FastifyReply
+    ) {
+        try {
+            const weather = await getCurrentWeather(city);
+            return {
+                location: weather.location,
+                temperature: `${Math.round(weather.temperatureCelsius)}°C`,
+                temperatureCelsius: weather.temperatureCelsius,
+                condition: weather.condition,
+                weatherCode: weather.weatherCode,
                 requestedBy: {
                     id: request.user?.sub,
                     username: request.user?.username,
                     email: request.user?.email,
-                    roles: request.user?.roles
-                }
+                    roles: request.user?.roles,
+                },
             };
-    });
+        } catch (err) {
+            if (err instanceof CityNotFoundError) {
+                return reply.status(404).send({
+                    error: "Not Found",
+                    message: err.message,
+                });
+            }
+            if (err instanceof UpstreamError) {
+                request.log.error({ err }, "Open-Meteo upstream failure");
+                return reply.status(502).send({
+                    error: "Bad Gateway",
+                    message: "Weather provider is unavailable",
+                });
+            }
+            throw err;
+        }
+    }
+
+    app.get(
+        '/api/weather',
+        {
+            preHandler: [requireAuth, requireRole('weather:read')]
+        },
+        async (request, reply) => respondWithWeather(DEFAULT_LOCATION, request, reply)
+    );
 
 
     app.get(
@@ -28,19 +61,9 @@ export async function weatherRoutes(app: FastifyInstance) {
         {
             preHandler: [requireAuth, requireRole('weather:read')]
         },
-        async (request) => {
+        async (request, reply) => {
             const { location } = request.params as { location: string };
-            return {
-                location,
-                temperature: '20°C',
-                condition: 'Sunny',
-                requestedBy: {
-                    id: request.user?.sub,
-                    username: request.user?.username,
-                    email: request.user?.email,
-                    roles: request.user?.roles
-                }
-            };
+            return respondWithWeather(location, request, reply);
         }
     );
 
@@ -60,5 +83,5 @@ export async function weatherRoutes(app: FastifyInstance) {
                 }
             };
         }
-    );  
+    );
 }
