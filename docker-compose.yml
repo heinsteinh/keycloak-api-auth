@@ -37,7 +37,7 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
     volumes:
-      - ./weather-keycloak-api/keycloak:/opt/keycloak/data/import:ro
+      - ./infra/keycloak:/opt/keycloak/data/import:ro
       - ./infra/keycloak-themes:/opt/keycloak/themes:ro
     ports:
       - "${KEYCLOAK_PORT}:8080"

@@ -19,6 +19,8 @@ A reference implementation of an end-to-end **OIDC + PKCE** authentication flow 
 ├── docs/
 │   └── architecture.md         # End-to-end design + auth flow
 ├── infra/
+│   ├── keycloak/
+│   │   └── realm-export.json   # Auto-imported on first Keycloak start
 │   └── keycloak-themes/
 │       └── weather/            # Custom Keycloak login theme (extends keycloak.v2)
 │           └── login/
@@ -28,8 +30,6 @@ A reference implementation of an end-to-end **OIDC + PKCE** authentication flow 
 │                   └── img/logo.svg
 ├── weather-keycloak-api/       # Fastify backend (see its README)
 │   ├── src/
-│   ├── keycloak/
-│   │   └── realm-export.json   # Auto-imported on first Keycloak start
 │   └── README.md
 └── weather-frontend/           # React SPA (see its README)
     ├── src/
@@ -81,7 +81,7 @@ pnpm up        # docker compose up -d
 This boots:
 
 - **`weather-keycloak-db`** — Postgres 16 (internal-only, on the `weather-net` bridge network)
-- **`weather-keycloak`** — Keycloak 26 with `--import-realm`, which auto-provisions the `weather` realm from [`weather-keycloak-api/keycloak/realm-export.json`](./weather-keycloak-api/keycloak/realm-export.json) on the **first** boot (only when the DB volume is empty).
+- **`weather-keycloak`** — Keycloak 26 with `--import-realm`, which auto-provisions the `weather` realm from [`infra/keycloak/realm-export.json`](./infra/keycloak/realm-export.json) on the **first** boot (only when the DB volume is empty).
 
 Tail logs while it boots:
 
@@ -194,7 +194,7 @@ pnpm down:clean    # stop containers AND wipe the DB volume (realm import re-run
 
 ## Seed identities
 
-Provisioned by [`weather-keycloak-api/keycloak/realm-export.json`](./weather-keycloak-api/keycloak/realm-export.json):
+Provisioned by [`infra/keycloak/realm-export.json`](./infra/keycloak/realm-export.json):
 
 | User         | Password        | Realm roles                       |
 | ------------ | --------------- | --------------------------------- |
@@ -242,7 +242,7 @@ The login page at <http://localhost:8080/realms/weather/protocol/openid-connect/
   - `resources/css/styles.css` — overrides PatternFly v5 tokens, the primary button (`blue-600`), and injects the logo above the title
   - `resources/img/logo.svg` — sun + cloud mark
 - Mounted into the container by `docker-compose.yml`: `./infra/keycloak-themes:/opt/keycloak/themes:ro`
-- Activated in [`weather-keycloak-api/keycloak/realm-export.json`](./weather-keycloak-api/keycloak/realm-export.json) via `"loginTheme": "weather"`
+- Activated in [`infra/keycloak/realm-export.json`](./infra/keycloak/realm-export.json) via `"loginTheme": "weather"`
 
 Iterating on the theme:
 

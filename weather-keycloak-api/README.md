@@ -27,7 +27,7 @@ src/
   weather/
     openMeteo.ts           # Open-Meteo geocoding + current-forecast client
 ../docker-compose.yml      # Keycloak + Postgres (lives at the monorepo root)
-keycloak/
+../infra/keycloak/
   realm-export.json        # Pre-baked realm: clients, roles, seed users
 request.http               # Ready-to-run requests (REST Client / JetBrains HTTP)
 ```
@@ -67,7 +67,7 @@ request.http               # Ready-to-run requests (REST Client / JetBrains HTTP
 
    Keycloak admin console: <http://localhost:8080> (login with `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD`).
 
-3. **Configure the realm** — easiest path is to **import `keycloak/realm-export.json`**, which pre-creates everything below.
+3. **Configure the realm** — easiest path is to **import `infra/keycloak/realm-export.json`**, which pre-creates everything below.
 
    **Option A — auto-import on startup** (recommended). Mount the folder and pass `--import-realm` in `docker-compose.yml`:
 
@@ -88,7 +88,7 @@ request.http               # Ready-to-run requests (REST Client / JetBrains HTTP
    docker compose up -d
    ```
 
-   **Option B — manual import** via the admin console: *Realm settings → Action → Partial import* (or *Create realm → Resource file*) and select `keycloak/realm-export.json`.
+   **Option B — manual import** via the admin console: *Realm settings → Action → Partial import* (or *Create realm → Resource file*) and select `infra/keycloak/realm-export.json`.
 
    The export provisions:
    - Realm `weather` (access token lifespan 300s).
