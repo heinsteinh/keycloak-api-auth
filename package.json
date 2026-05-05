@@ -1,0 +1,19 @@
+{
+  "name": "weather-keycloak-auth",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo: Keycloak-protected weather API (Fastify + TS) and React SPA (Vite + keycloak-js) demonstrating end-to-end OIDC + PKCE auth.",
+  "packageManager": "pnpm@10.33.2",
+  "scripts": {
+    "dev:api": "pnpm --filter weather-keycloak-api dev",
+    "dev:web": "pnpm --filter weather-frontend dev",
+    "dev": "pnpm -r --parallel --filter \"./weather-*\" dev",
+    "build": "pnpm -r --filter \"./weather-*\" build",
+    "lint": "pnpm -r --filter \"./weather-*\" lint",
+    "test": "pnpm -r --filter \"./weather-*\" test",
+    "up": "docker compose up -d",
+    "down": "docker compose down",
+    "down:clean": "docker compose down -v",
+    "logs": "docker compose logs -f"
+  }
+}

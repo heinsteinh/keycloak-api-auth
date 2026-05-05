@@ -1,0 +1,3 @@
+packages:
+  - weather-keycloak-api
+  - weather-frontend

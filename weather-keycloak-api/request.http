@@ -1,0 +1,40 @@
+### Variables
+@keycloak = http://localhost:8080
+@api = http://localhost:3000
+@realm = weather
+@clientId = weather-api
+@username = alice
+@password = Password123!
+@adminUsername = admin-user
+@adminPassword = Password123!
+
+### 1. Get access token (password grant)
+# @name login
+POST {{keycloak}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{clientId}}&grant_type=password&username={{username}}&password={{password}}
+
+### 2. Call weather API with the token from step 1
+GET {{api}}/api/weather
+Authorization: Bearer {{login.response.body.access_token}}
+
+### 3. Health check (no auth)
+GET {{api}}/health
+
+### 4. Refresh token
+POST {{keycloak}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{clientId}}&grant_type=refresh_token&refresh_token={{login.response.body.refresh_token}}
+
+### 5. Get access token as admin-user
+# @name adminLogin
+POST {{keycloak}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{clientId}}&grant_type=password&username={{adminUsername}}&password={{adminPassword}}
+
+### 6. Call admin-only weather endpoint with admin token
+GET {{api}}/api/weather/admin
+Authorization: Bearer {{adminLogin.response.body.access_token}}
