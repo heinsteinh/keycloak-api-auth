@@ -43,26 +43,119 @@ A reference implementation of an end-to-end **OIDC + PKCE** authentication flow:
 - Node.js 20+
 - pnpm 10+ (`corepack enable` if needed)
 
-## Quickstart
+## Running the project
+
+The stack has three layers — bring them up in order. All commands are run from the **monorepo root**.
+
+### 1. Configure environment
 
 ```bash
-# 1. Configure environment
 cp .env.example .env
-# (optional) edit secrets in .env
-
-# 2. Install all workspace dependencies
-pnpm install
-
-# 3. Start Keycloak + Postgres (realm auto-imported on first run)
-pnpm up
-
-# 4. Start the API and the SPA in parallel
-pnpm dev
 ```
 
-Then open <http://localhost:5173> and log in as `alice` / `Password123!` (read-only) or `admin-user` / `Password123!` (read + admin).
+The defaults work out of the box for local development. Edit secrets (`POSTGRES_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD`) before exposing this anywhere beyond `localhost`.
 
-## Service ports
+### 2. Install workspace dependencies
+
+```bash
+pnpm install
+```
+
+Resolves and installs deps for both `weather-keycloak-api` and `weather-frontend` into a single root `node_modules/` (pnpm workspaces, hoisted lockfile).
+
+### 3. Start Keycloak + Postgres
+
+```bash
+pnpm up        # docker compose up -d
+```
+
+This boots:
+
+- **`weather-keycloak-db`** — Postgres 16 (internal-only, on the `weather-net` bridge network)
+- **`weather-keycloak`** — Keycloak 26 with `--import-realm`, which auto-provisions the `weather` realm from [`weather-keycloak-api/keycloak/realm-export.json`](./weather-keycloak-api/keycloak/realm-export.json) on the **first** boot (only when the DB volume is empty).
+
+Tail logs while it boots:
+
+```bash
+pnpm logs
+```
+
+Wait until you see `Listening on: http://0.0.0.0:8080` (≈ 30–60 s on first run). Sanity-check the realm:
+
+```bash
+curl -sf http://localhost:8080/realms/weather/.well-known/openid-configuration | head -c 120
+```
+
+| URL                                                | What it is                              |
+| -------------------------------------------------- | --------------------------------------- |
+| <http://localhost:8080>                            | Keycloak base                           |
+| <http://localhost:8080/admin>                      | Admin console (login with `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` from `.env`) |
+| <http://localhost:8080/realms/weather>             | Public realm endpoint                   |
+| <http://localhost:8080/realms/weather/.well-known/openid-configuration> | OIDC discovery document |
+| <http://localhost:8080/realms/weather/protocol/openid-connect/certs>    | JWKS (used by the API)  |
+
+### 4. Start the backend API
+
+In a new terminal:
+
+```bash
+pnpm dev:api
+```
+
+Runs `tsx watch src/main.ts` from the API package — hot-reloads on file changes. The API loads `.env` from the monorepo root.
+
+| URL                                              | Auth                  | What it returns                  |
+| ------------------------------------------------ | --------------------- | -------------------------------- |
+| <http://localhost:3000/health>                   | none                  | `{"status":"ok"}` liveness probe |
+| <http://localhost:3000/api/weather>              | role `weather:read`   | Sample weather payload           |
+| <http://localhost:3000/api/weather/:location>    | role `weather:read`   | Per-location sample              |
+| <http://localhost:3000/api/weather/admin>        | role `weather:admin`  | Admin-only sample                |
+
+Smoke-test without the SPA — fetch a token via password grant, then call the API:
+
+```bash
+TOKEN=$(curl -s -X POST 'http://localhost:8080/realms/weather/protocol/openid-connect/token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'client_id=weather-api' -d 'grant_type=password' \
+  -d 'username=alice' -d 'password=Password123!' | jq -r .access_token)
+
+curl -s http://localhost:3000/api/weather -H "Authorization: Bearer $TOKEN"
+```
+
+### 5. Start the frontend SPA
+
+In a third terminal:
+
+```bash
+pnpm dev:web
+```
+
+Runs the Vite dev server with HMR.
+
+| URL                       | What it is                                                |
+| ------------------------- | --------------------------------------------------------- |
+| <http://localhost:5173>   | The SPA — redirects to Keycloak login on first load       |
+
+Open <http://localhost:5173>, log in as `alice` / `Password123!` (read-only) or `admin-user` / `Password123!` (read + admin), and the dashboard will fetch `/api/weather` with the bearer token.
+
+### Or: start the API and SPA together
+
+```bash
+pnpm dev      # runs dev:api and dev:web in parallel
+```
+
+Output is interleaved; use the per-service scripts above if you prefer separate terminals.
+
+### Stopping
+
+```bash
+# stop the dev servers: Ctrl-C in each terminal
+
+pnpm down          # stop containers, keep the DB volume (realm + users persist)
+pnpm down:clean    # stop containers AND wipe the DB volume (realm import re-runs next time)
+```
+
+## Service ports — quick reference
 
 | Service             | URL                       | Started by                           |
 | ------------------- | ------------------------- | ------------------------------------ |
