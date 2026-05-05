@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Weather Dashboard">
+  <defs>
+    <linearGradient id="sun" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="cloud" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+  </defs>
+  <circle cx="22" cy="22" r="10" fill="url(#sun)"/>
+  <g stroke="#f59e0b" stroke-width="2" stroke-linecap="round">
+    <line x1="22" y1="4" x2="22" y2="9"/>
+    <line x1="22" y1="35" x2="22" y2="40"/>
+    <line x1="4" y1="22" x2="9" y2="22"/>
+    <line x1="35" y1="22" x2="40" y2="22"/>
+    <line x1="9" y1="9" x2="12.5" y2="12.5"/>
+    <line x1="31.5" y1="31.5" x2="35" y2="35"/>
+    <line x1="35" y1="9" x2="31.5" y2="12.5"/>
+    <line x1="9" y1="35" x2="12.5" y2="31.5"/>
+  </g>
+  <path d="M18 46c-4 0-7-3-7-7s3-7 7-7c1 0 2 .2 2.8.5C22 28 25.8 25 30.5 25c5.5 0 10 4 10.5 9.3.4-.2.8-.3 1.3-.3 3 0 5.7 2.5 5.7 5.7S45.3 45.5 42.3 45.5H18z" fill="url(#cloud)" stroke="#2563eb" stroke-width="1.5"/>
+</svg>

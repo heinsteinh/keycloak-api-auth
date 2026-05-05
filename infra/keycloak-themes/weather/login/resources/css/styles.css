@@ -1,0 +1,176 @@
+/*
+ * Weather Dashboard — custom Keycloak login theme
+ * Extends keycloak.v2; targets the PatternFly v5 markup it actually emits.
+ */
+
+:root {
+  --weather-primary: #2563eb;        /* blue-600 */
+  --weather-primary-hover: #1d4ed8;  /* blue-700 */
+  --weather-bg: #f3f4f6;             /* gray-100 */
+  --weather-card: #ffffff;
+  --weather-text: #111827;           /* gray-900 */
+  --weather-muted: #6b7280;          /* gray-500 */
+  --weather-border: #e5e7eb;         /* gray-200 */
+  --weather-radius: 12px;
+
+  /* Map onto PatternFly v5 tokens used by keycloak.v2 */
+  --pf-v5-global--primary-color--100: var(--weather-primary);
+  --pf-v5-global--primary-color--200: var(--weather-primary-hover);
+  --pf-v5-global--link--Color: var(--weather-primary);
+  --pf-v5-global--link--Color--hover: var(--weather-primary-hover);
+  --pf-v5-global--BorderRadius--sm: 8px;
+  --pf-v5-global--BorderRadius--lg: var(--weather-radius);
+}
+
+/* Sky-blue gradient page background */
+body#keycloak-bg,
+body {
+  background: linear-gradient(180deg, #dbeafe 0%, var(--weather-bg) 60%) fixed !important;
+  color: var(--weather-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+/* Center the login container */
+.pf-v5-c-login {
+  background: transparent !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.pf-v5-c-login__container {
+  width: 100%;
+  max-width: 28rem;
+}
+
+/* Header — replace the realm-name text with our logo + branded title */
+.pf-v5-c-login__header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+#kc-header-wrapper.pf-v5-c-brand {
+  font-size: 0 !important;          /* hide the realm name text */
+  line-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#kc-header-wrapper.pf-v5-c-brand::before {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 72px;
+  background: url("../img/logo.svg") center/contain no-repeat;
+}
+
+#kc-header-wrapper.pf-v5-c-brand::after {
+  content: "Weather Dashboard";
+  display: block;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  color: var(--weather-text);
+}
+
+/* Card */
+.pf-v5-c-login__main {
+  background: var(--weather-card) !important;
+  border: 1px solid var(--weather-border);
+  border-radius: var(--weather-radius) !important;
+  box-shadow: 0 10px 25px -10px rgba(15, 23, 42, 0.15),
+              0 4px 8px -4px rgba(15, 23, 42, 0.08) !important;
+  padding: 2rem !important;
+}
+
+.pf-v5-c-login__main-header {
+  margin-bottom: 1.25rem;
+}
+
+.pf-v5-c-login__main-header h1#kc-page-title,
+h1#kc-page-title.pf-v5-c-title {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: var(--weather-text);
+  text-align: center;
+}
+
+/* Inputs */
+input.pf-v5-c-form-control,
+.pf-v5-c-form-control,
+.pf-v5-c-form-control input,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  border-radius: 8px !important;
+  border: 1px solid var(--weather-border) !important;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+input.pf-v5-c-form-control:focus,
+.pf-v5-c-form-control input:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+  border-color: var(--weather-primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
+  outline: none !important;
+}
+
+/* Primary button */
+.pf-v5-c-button.pf-m-primary,
+input[type="submit"].pf-v5-c-button.pf-m-primary,
+input[type="submit"].btn-primary,
+.btn-primary {
+  background-color: var(--weather-primary) !important;
+  border-color: var(--weather-primary) !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+  transition: background-color .15s, transform .05s;
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+input[type="submit"].btn-primary:hover,
+.btn-primary:hover {
+  background-color: var(--weather-primary-hover) !important;
+  border-color: var(--weather-primary-hover) !important;
+}
+
+.pf-v5-c-button.pf-m-primary:active,
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* Links (forgot password, register, etc.) */
+a,
+.kc-login-tooltip,
+#kc-registration a,
+#kc-form-options a {
+  color: var(--weather-primary) !important;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--weather-primary-hover) !important;
+  text-decoration: underline;
+}
+
+/* Footer / muted text */
+.subtitle,
+.instruction,
+.pf-v5-c-login__main-footer-band,
+.pf-v5-c-login__footer {
+  color: var(--weather-muted);
+}
+
+/* Alerts */
+.alert-error,
+.pf-v5-c-alert.pf-m-danger {
+  border-radius: 8px !important;
+}
