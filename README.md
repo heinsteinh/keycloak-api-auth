@@ -18,6 +18,14 @@ A reference implementation of an end-to-end **OIDC + PKCE** authentication flow:
 ├── pnpm-workspace.yaml         # Workspace package globs
 ├── docs/
 │   └── architecture.md         # End-to-end design + auth flow
+├── infra/
+│   └── keycloak-themes/
+│       └── weather/            # Custom Keycloak login theme (extends keycloak.v2)
+│           └── login/
+│               ├── theme.properties
+│               └── resources/
+│                   ├── css/styles.css
+│                   └── img/logo.svg
 ├── weather-keycloak-api/       # Fastify backend (see its README)
 │   ├── src/
 │   ├── keycloak/
@@ -221,12 +229,34 @@ See [`docs/architecture.md`](./docs/architecture.md) for the full breakdown.
 - Backend: [`weather-keycloak-api/README.md`](./weather-keycloak-api/README.md) — endpoints, token verification, troubleshooting
 - Frontend: [`weather-frontend/README.md`](./weather-frontend/README.md) — auth provider, token refresh, configuration notes
 
+## Custom Keycloak login theme
+
+The login page at <http://localhost:8080/realms/weather/protocol/openid-connect/auth?...> is branded with a custom theme that extends `keycloak.v2` (the default modern theme).
+
+- Theme files: [`infra/keycloak-themes/weather/login/`](./infra/keycloak-themes/weather/login/)
+  - `theme.properties` — declares `parent=keycloak.v2` and registers the stylesheet
+  - `resources/css/styles.css` — overrides PatternFly v5 tokens, the primary button (`blue-600`), and injects the logo above the title
+  - `resources/img/logo.svg` — sun + cloud mark
+- Mounted into the container by `docker-compose.yml`: `./infra/keycloak-themes:/opt/keycloak/themes:ro`
+- Activated in [`weather-keycloak-api/keycloak/realm-export.json`](./weather-keycloak-api/keycloak/realm-export.json) via `"loginTheme": "weather"`
+
+Iterating on the theme:
+
+```bash
+# edit a file under infra/keycloak-themes/weather/...
+docker compose restart keycloak     # in start-dev mode this re-reads themes
+# hard-refresh (Ctrl+Shift+R) the login page
+```
+
+`start-dev` mode disables theme caching, so most edits are picked up by a browser hard-refresh without restarting Keycloak. Adding a *new* file (e.g. a new image) requires `docker compose restart keycloak`.
+
 ## Common gotchas
 
 - **`invalid_grant: Account is not fully set up`** — the Keycloak user is missing email/first/last or has a pending required action. Fix in the admin console at <http://localhost:8080>.
-- **`401 Invalid token`** — token expired (default 5 min) or `azp` mismatch. The frontend issues tokens with `azp: weather-frontend` while the API checks `azp === weather-api`. See `docs/architecture.md` for the three resolution options (widen check, audience mapper, or accept both).
+- **`401 Invalid token`** — token expired (default 5 min). The `azp` mismatch between `weather-frontend` and `weather-api` is handled by the API's `KEYCLOAK_ALLOWED_AZP` env var (defaults to accepting both clients).
 - **Realm import did not run** — the import only runs against an empty DB. Use `pnpm down:clean` to wipe the volume and re-import.
 - **CORS preflight fails** — the API whitelists `http://localhost:5173`. Changing the SPA dev port requires updating both `weather-keycloak-api/src/main.ts` and the `weather-frontend` client's `webOrigins` in Keycloak.
+- **`pnpm up` does nothing useful** — `up` collides with pnpm's built-in dependency-upgrade command. Use `pnpm run up` (or the unambiguous alias `pnpm kc:up`).
 
 ## License
 
