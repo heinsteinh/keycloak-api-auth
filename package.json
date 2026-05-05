@@ -14,6 +14,10 @@
     "up": "docker compose up -d",
     "down": "docker compose down",
     "down:clean": "docker compose down -v",
-    "logs": "docker compose logs -f"
+    "logs": "docker compose logs -f",
+    "kc:up": "docker compose up -d",
+    "kc:down": "docker compose down",
+    "kc:reset": "docker compose down -v && docker compose up -d",
+    "kc:logs": "docker compose logs -f keycloak"
   }
 }
