@@ -29,12 +29,14 @@ export async function verifyAccessToken(token: string): Promise<AuthenticatedUse
 
   const kcPayload = payload as KeycloakAccessToken;
 
-  if (kcPayload.azp !== config.KEYCLOAK_CLIENT_ID) {
+  if (!kcPayload.azp || !config.ALLOWED_AZP.includes(kcPayload.azp)) {
     throw new Error('Invalid authorized party');
   }
 
   const realmRoles = kcPayload.realm_access?.roles ?? [];
-  const clientRoles = kcPayload.resource_access?.[config.KEYCLOAK_CLIENT_ID]?.roles ?? [];
+  const clientRoles = kcPayload.azp
+    ? (kcPayload.resource_access?.[kcPayload.azp]?.roles ?? [])
+    : [];
 
   return {
     sub: kcPayload.sub ?? '',
