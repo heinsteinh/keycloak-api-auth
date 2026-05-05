@@ -1,17 +1,6 @@
-import { createContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import keycloak from './keycloak';
-
-type AuthContextType = {
-  keycloak: typeof keycloak | null;
-  authenticated: boolean;
-  token: string | null;
-};
-
-export const AuthContext = createContext<AuthContextType>({
-  keycloak: null,
-  authenticated: false,
-  token: null,
-});
+import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false);

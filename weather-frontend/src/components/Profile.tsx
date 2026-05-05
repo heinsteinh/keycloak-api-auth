@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import { AuthContext } from '../auth/AuthProvider';
+import { AuthContext } from '../auth/AuthContext';
 
 type ParsedToken = {
   sub?: string;

@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import { AuthContext } from './auth/AuthProvider';
+import { AuthContext } from './auth/AuthContext';
 import { Weather } from './components/Weather';
 import { Profile } from './components/Profile';
 

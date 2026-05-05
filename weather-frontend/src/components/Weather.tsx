@@ -1,7 +1,7 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { AxiosError } from 'axios';
-import { AuthContext } from '../auth/AuthProvider';
+import { AuthContext } from '../auth/AuthContext';
 import { api } from '../api/client';
 
 type WeatherResponse = {
@@ -45,10 +45,6 @@ export function Weather() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    if (token) fetchWeather();
-  }, [token]);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
