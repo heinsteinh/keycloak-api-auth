@@ -1,10 +1,10 @@
 # Weather + Keycloak Auth
 
-A reference implementation of an end-to-end **OIDC + PKCE** authentication flow:
+A reference implementation of an end-to-end **OIDC + PKCE** authentication flow with a real-data backend:
 
-- **Keycloak** as the identity provider (realm `weather`, two clients, two realm roles, two seed users)
-- **`weather-keycloak-api`** — Fastify + TypeScript API that verifies access tokens via JWKS and authorizes by realm role
-- **`weather-frontend`** — React 19 + Vite SPA that logs users in via Authorization Code + PKCE and calls the API with a bearer token
+- **Keycloak** as the identity provider (realm `weather`, two clients, two realm roles, two seed users, custom login theme)
+- **`weather-keycloak-api`** — Fastify + TypeScript API that verifies access tokens via JWKS, authorizes by realm role, and proxies live weather from [Open-Meteo](https://open-meteo.com/) (no API key required)
+- **`weather-frontend`** — React 19 + Vite SPA that logs users in via Authorization Code + PKCE, lets the user search any city, and renders the current temperature and conditions
 
 > The full system design, auth flow, and trust boundaries are documented in [`docs/architecture.md`](./docs/architecture.md).
 
@@ -38,12 +38,13 @@ A reference implementation of an end-to-end **OIDC + PKCE** authentication flow:
 
 ## Stack at a glance
 
-| Layer    | Tech                                                                |
-| -------- | ------------------------------------------------------------------- |
-| IdP      | Keycloak 26 (Postgres-backed)                                       |
-| Backend  | Node 20+, Fastify 5, TypeScript, `jose` for JWT verification, `zod` |
-| Frontend | React 19, Vite, TypeScript, Tailwind v3, `keycloak-js`              |
-| Tooling  | pnpm 10 workspaces, Docker Compose, `tsx`                           |
+| Layer        | Tech                                                                |
+| ------------ | ------------------------------------------------------------------- |
+| IdP          | Keycloak 26 (Postgres-backed) + custom `weather` login theme        |
+| Backend      | Node 20+, Fastify 5, TypeScript, `jose` for JWT verification, `zod` |
+| Weather data | [Open-Meteo](https://open-meteo.com/) (geocoding + current forecast, no API key) |
+| Frontend     | React 19, Vite, TypeScript, Tailwind v3, `keycloak-js`              |
+| Tooling      | pnpm 10 workspaces, Docker Compose, `tsx`                           |
 
 ## Prerequisites
 
@@ -115,8 +116,8 @@ Runs `tsx watch src/main.ts` from the API package — hot-reloads on file change
 | URL                                              | Auth                  | What it returns                  |
 | ------------------------------------------------ | --------------------- | -------------------------------- |
 | <http://localhost:3000/health>                   | none                  | `{"status":"ok"}` liveness probe |
-| <http://localhost:3000/api/weather>              | role `weather:read`   | Sample weather payload           |
-| <http://localhost:3000/api/weather/:location>    | role `weather:read`   | Per-location sample              |
+| <http://localhost:3000/api/weather>              | role `weather:read`   | Live weather for the default city (New York)   |
+| <http://localhost:3000/api/weather/:location>    | role `weather:read`   | Live weather for any city (Open-Meteo lookup; 404 if unknown) |
 | <http://localhost:3000/api/weather/admin>        | role `weather:admin`  | Admin-only sample                |
 
 Smoke-test without the SPA — fetch a token via password grant, then call the API:
@@ -128,7 +129,10 @@ TOKEN=$(curl -s -X POST 'http://localhost:8080/realms/weather/protocol/openid-co
   -d 'username=alice' -d 'password=Password123!' | jq -r .access_token)
 
 curl -s http://localhost:3000/api/weather -H "Authorization: Bearer $TOKEN"
+curl -s http://localhost:3000/api/weather/Paris -H "Authorization: Bearer $TOKEN"
 ```
+
+The API geocodes the city via Open-Meteo, fetches the current temperature and weather code, and maps the code to a human-readable condition. Unknown cities return `404 City not found`; if Open-Meteo is unreachable the API returns `502 Bad Gateway`.
 
 ### 5. Start the frontend SPA
 

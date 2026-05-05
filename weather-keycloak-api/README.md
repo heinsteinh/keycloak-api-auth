@@ -9,6 +9,7 @@ A small Fastify + TypeScript API that demonstrates protecting HTTP endpoints wit
 - **Runtime:** Node.js (ESM) + TypeScript, run with `tsx` in dev
 - **HTTP:** Fastify 5 with `@fastify/helmet`, `@fastify/cors`, `@fastify/rate-limit`
 - **Auth:** Keycloak 26 (Postgres-backed), JWT verification with `jose`
+- **Weather data:** [Open-Meteo](https://open-meteo.com/) (free, no API key) — geocoding + current forecast
 - **Config:** `dotenv` + `zod`-validated environment
 
 ## Project layout
@@ -23,6 +24,8 @@ src/
   routes/
     health.routes.ts       # GET /health
     weather.routes.ts      # GET /api/weather (role: weather:read)
+  weather/
+    openMeteo.ts           # Open-Meteo geocoding + current-forecast client
 ../docker-compose.yml      # Keycloak + Postgres (lives at the monorepo root)
 keycloak/
   realm-export.json        # Pre-baked realm: clients, roles, seed users
@@ -150,12 +153,46 @@ Or open `request.http` in VS Code (REST Client extension) / JetBrains HTTP Clien
 
 ## Endpoints
 
-| Method | Path                     | Auth                  | Description                       |
-| ------ | ------------------------ | --------------------- | --------------------------------- |
-| GET    | `/health`                | none                  | Liveness probe                    |
-| GET    | `/api/weather`           | role `weather:read`   | Sample weather payload            |
-| GET    | `/api/weather/:location` | role `weather:read`   | Sample weather for a location     |
-| GET    | `/api/weather/admin`     | role `weather:admin`  | Admin-only sample endpoint        |
+| Method | Path                     | Auth                  | Description                                            |
+| ------ | ------------------------ | --------------------- | ------------------------------------------------------ |
+| GET    | `/health`                | none                  | Liveness probe                                         |
+| GET    | `/api/weather`           | role `weather:read`   | Current weather for the default location (New York)    |
+| GET    | `/api/weather/:location` | role `weather:read`   | Current weather for the given city (Open-Meteo lookup) |
+| GET    | `/api/weather/admin`     | role `weather:admin`  | Admin-only sample endpoint                             |
+
+### Weather response shape
+
+`/api/weather` and `/api/weather/:location` return live data from Open-Meteo:
+
+```json
+{
+  "location": "Paris, Île-de-France, France",
+  "temperature": "14°C",
+  "temperatureCelsius": 14.1,
+  "condition": "Rain",
+  "weatherCode": 61,
+  "requestedBy": {
+    "id": "...",
+    "username": "alice",
+    "email": "alice@example.com",
+    "roles": ["weather:read"]
+  }
+}
+```
+
+- `location` — geocoded label (`name, admin1, country`)
+- `temperature` — display string, rounded to whole degrees
+- `temperatureCelsius` — raw float from the forecast endpoint
+- `weatherCode` — WMO code; `condition` is its human-readable mapping (see [Open-Meteo docs](https://open-meteo.com/en/docs))
+
+### Error responses
+
+| Status | When                                                                  | Body                                                                |
+| ------ | --------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `401`  | Missing/invalid bearer, signature/issuer/`azp` check failed           | `{ "error": "Invalid token", "message": "<jose error>" }`           |
+| `403`  | Token valid but missing the required realm role                       | `{ "error": "Forbidden", "message": "User does not have ..." }`     |
+| `404`  | Geocoding returns no result for the given city                        | `{ "error": "Not Found", "message": "City not found: <city>" }`     |
+| `502`  | Open-Meteo is unreachable or returns a non-2xx response               | `{ "error": "Bad Gateway", "message": "Weather provider is unavailable" }` |
 
 ## Scripts
 
