@@ -18,9 +18,11 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
         const user = await verifyAccessToken(token);
         request.user = user; // Attach user info to the request object
     } catch (error) {
+        const message = error instanceof Error ? error.message : 'Token verification failed';
+        request.log.warn({ err: error }, `Auth failed: ${message}`);
         reply.status(401).send({
              error: 'Invalid token',
-             message : 'Token verification failed'
+             message
             });
     }
 }
